@@ -75,6 +75,14 @@ You can train the model in any custom dataset other than IAM and CVL. The proces
 
 ## Handwriting synthesis results
 
+### Local results
+Add a folder (eg assets8) filled with at least 15, 32px x 192px png images of example handwriting. Adjust prepare.py to point to
+your new folder, and the num_examples to match number of images in your folder. Play around with text prompt. Change the file name output to not overwrite old results...
+```python
+python3 prepare.py
+```
+
+
 Please check the ```results``` folder in the repository to see more qualitative analysis. Also, please check out colab demo to try with your own custom text and writing style [![Colab Notebook](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ankanbhunia/Handwriting-Transformers/blob/main/demo.ipynb)
 
  <p align="center">
