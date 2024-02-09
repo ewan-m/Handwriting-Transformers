@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 # Define the dimensions
-num_images = 29
+num_images = 30
 height = 32
 width = 192
 
@@ -20,7 +20,7 @@ width = 192
 data = np.zeros((num_images, height, width), dtype=np.uint8)
 
 # Load images from directory
-directory = "./assets8"
+directory = "./assets9"
 image_files = sorted([file for file in os.listdir(directory) if file.endswith(".png")])
 
 if len(image_files) != num_images:
@@ -78,7 +78,7 @@ furthest_widths = find_furthest_black_width_for_images(data)
 print(furthest_widths)
 
 
-model_path = "files/iam_model.pth"
+model_path = "files/cvl_model.pth"
 
 text = "leg meeting production from Her ha writing take use find asset down clear proven assistants Legible handwriting when"
 output_path = "results"
@@ -122,7 +122,7 @@ page_val = model._generate_page(
     eval_len_text,
 )
 
-cv2.imwrite(output_path + "/image-8-IAM.png", page_val * 255)
+cv2.imwrite(output_path + "/image-9-CVL.png", page_val * 255)
 
 
 print("\nOutput images saved in : " + output_path)
