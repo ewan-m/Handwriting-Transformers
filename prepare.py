@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 # Define the dimensions
-num_images = 30
+num_images = 29
 height = 32
 width = 192
 
@@ -20,7 +20,7 @@ width = 192
 data = np.zeros((num_images, height, width), dtype=np.uint8)
 
 # Load images from directory
-directory = "./assets6"
+directory = "./assets8"
 image_files = sorted([file for file in os.listdir(directory) if file.endswith(".png")])
 
 if len(image_files) != num_images:
@@ -122,7 +122,7 @@ page_val = model._generate_page(
     eval_len_text,
 )
 
-cv2.imwrite(output_path + "/image-7_2.png", page_val * 255)
+cv2.imwrite(output_path + "/image-8-IAM.png", page_val * 255)
 
 
 print("\nOutput images saved in : " + output_path)
