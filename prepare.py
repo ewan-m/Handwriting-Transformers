@@ -15,9 +15,9 @@ from torchvision import transforms
 num_images = 15
 height = 32
 width = 192
-directory = "./eval_files/rip"
+directory = "./eval_files/rip4"
 model_path = "files/iam_model.pth"
-output_file_name = "/image-rip-IAM.png"
+output_file_name = "/image-rip4-IAM.png"
 text = "No two people can write precisely the same way just like no two people can have the same fingerprints"
 output_path = "results"
 
