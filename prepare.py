@@ -9,79 +9,71 @@ import pickle
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import glob
+from torchvision import transforms
 
-
-# Define the dimensions
-num_images = 30
+num_images = 15
 height = 32
 width = 192
-
-# Initialize an empty numpy array to hold the images
-data = np.zeros((num_images, height, width), dtype=np.uint8)
-
-# Load images from directory
-directory = "./assets9"
-image_files = sorted([file for file in os.listdir(directory) if file.endswith(".png")])
-
-if len(image_files) != num_images:
-    raise ValueError(
-        "Number of images in the directory does not match the expected number."
-    )
-
-for i, image_file in enumerate(image_files):
-    # Load image
-    image_path = os.path.join(directory, image_file)
-    image = Image.open(image_path)
-
-    # Convert image to RGB and replace transparent parts with white
-    image = image.convert("RGBA")
-    image_data = np.array(image)
-    alpha_channel = image_data[:, :, 3]  # Extract alpha channel
-    image_data[:, :, :3][alpha_channel == 0] = [
-        255,
-        255,
-        255,
-    ]  # Replace transparent parts with white
-
-    # Convert to grayscale
-    image_data = np.dot(image_data[..., :3], [0.2989, 0.5870, 0.1140]).astype(np.uint8)
-
-    # Check dimensions
-    if image_data.shape != (height, width):
-        raise ValueError(f"Image {image_file} does not have the correct dimensions.")
-
-    # Populate the numpy array
-    data[i] = image_data
-
-
-def plot_tensor(tensor):
-    plt.imshow(tensor, cmap="gray", vmin=0, vmax=1)
-    plt.show()
-
-
-def find_furthest_black_width_for_images(image_datas):
-    furthest_widths = []
-    for data in image_datas:
-        furthest_width = 0
-        for row in data:
-            for i in range(191, 0, -1):
-                if row[i] != 254:
-                    if i > furthest_width:
-                        furthest_width = i
-
-        furthest_widths.append(furthest_width)
-    return furthest_widths
-
-
-# Example usage:
-furthest_widths = find_furthest_black_width_for_images(data)
-print(furthest_widths)
-
-
-model_path = "files/cvl_model.pth"
-
-text = "leg meeting production from Her ha writing take use find asset down clear proven assistants Legible handwriting when"
+directory = "./eval_files/rip"
+model_path = "files/iam_model.pth"
+output_file_name = "/image-rip-IAM.png"
+text = "No two people can write precisely the same way just like no two people can have the same fingerprints"
 output_path = "results"
+
+
+def load_itw_samples(folder_path, num_samples=15):
+    paths = glob.glob(f"{folder_path}/*.png")
+    paths = np.random.choice(paths, num_samples, replace=len(paths) <= num_samples)
+
+    imgs = []
+    for i in paths:
+        img = Image.open(i)
+        imgs.append(np.array(img.convert("L")))
+
+    imgs = [
+        cv2.resize(imgs_i, (32 * imgs_i.shape[1] // imgs_i.shape[0], 32))
+        for imgs_i in imgs
+    ]
+
+    imgs_pad = []
+    imgs_wids = []
+
+    trans_fn = get_transform(grayscale=True)
+
+    for img in imgs:
+
+        img = 255 - img
+        img_height, img_width = img.shape[0], img.shape[1]
+        outImg = np.zeros((img_height, width), dtype="float32")
+        outImg[:, :img_width] = img[:, :width]
+
+        img = 255 - outImg
+
+        imgs_pad.append(trans_fn((Image.fromarray(img))))
+        imgs_wids.append(img_width)
+
+    imgs_pad = torch.cat(imgs_pad, 0)
+
+    return imgs_pad.unsqueeze(0), torch.Tensor(imgs_wids).unsqueeze(0)
+
+
+def get_transform(grayscale=False, convert=True):
+    transform_list = []
+    if grayscale:
+        transform_list.append(transforms.Grayscale(1))
+
+    if convert:
+        transform_list += [transforms.ToTensor()]
+        if grayscale:
+            transform_list += [transforms.Normalize((0.5,), (0.5,))]
+        else:
+            transform_list += [transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+
+    return transforms.Compose(transform_list)
+
+
+squeezed_torch = load_itw_samples(directory, num_images)
 
 print("(2) Loading model...")
 
@@ -99,30 +91,34 @@ eval_text_encode = eval_text_encode.to("cpu").repeat(batch_size, 1, 1)
 os.makedirs(output_path, exist_ok=True)
 
 
-def plot_tensor(tensor):
-    plt.imshow(tensor, cmap="gray", vmin=0, vmax=1)
-    plt.show()
+def find_furthest_black_width_for_images(image_datas):
+    print(image_datas[0][0])
+    furthest_widths = []
+    for data in image_datas[0][0]:
+        furthest_width = 0
+        for row in data:
+            for i in range(191, 0, -1):
+                if row[i] != 1:
+                    if i > furthest_width:
+                        furthest_width = i
+
+        furthest_widths.append(furthest_width)
+    return furthest_widths
 
 
-scaled_data = data.astype(np.float32) / 255.0
+swids = torch.tensor(find_furthest_black_width_for_images(squeezed_torch))
 
-torch_data = torch.tensor(scaled_data)
-
-squeezed_torch = torch_data.unsqueeze(0)
-
-print(squeezed_torch)
-
-swids = torch.tensor(find_furthest_black_width_for_images(data))
+print(swids)
 squeezed_swids = swids.unsqueeze(0)
 
 page_val = model._generate_page(
-    squeezed_torch.to(DEVICE),
+    squeezed_torch[0].to(DEVICE),
     squeezed_swids,
     eval_text_encode,
     eval_len_text,
 )
 
-cv2.imwrite(output_path + "/image-9-CVL.png", page_val * 255)
+cv2.imwrite(output_path + output_file_name, page_val * 255)
 
 
-print("\nOutput images saved in : " + output_path)
+print("\nOutput images saved in : " + output_path + output_file_name)

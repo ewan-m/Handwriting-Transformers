@@ -5,7 +5,7 @@ import torch
 EXP_NAME = "IAM-339-15-E3D3-LR0.00005-bs8"
 RESUME = False
 
-DATASET = "CVL"
+DATASET = "IAM"
 if DATASET == "IAM":
     DATASET_PATHS = "files/IAM-32.pickle"
     NUM_WRITERS = 339
@@ -19,7 +19,7 @@ ENGLISH_WORDS_PATH = "files/english_words.txt"
 IMG_HEIGHT = 32
 resolution = 16
 batch_size = 1
-NUM_EXAMPLES = 30  # 15
+NUM_EXAMPLES = 11  # 15
 TN_HIDDEN_DIM = 512
 TN_DROPOUT = 0.1
 TN_NHEADS = 8
